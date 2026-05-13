@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionRequestItem {
+public class BankCapacityRequest {
     @NotNull(message = "Kategori sampah tidak boleh kosong")
     private Long categoryId;
 
-    @NotNull(message = "Berat sampah tidak boleh kosong")
-    @Positive(message = "Berat sampah harus lebih besar dari nol")
-    private Double weight;
+    @NotNull(message = "Kapasitas maksimum tidak boleh kosong")
+    @Positive(message = "Kapasitas maksimum harus lebih besar dari nol")
+    private Double maxCapacity;
 }

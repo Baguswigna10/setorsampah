@@ -4,65 +4,65 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.setorsampah.model.BankCapacity;
-import com.example.setorsampah.model.WasteBank;
+import com.example.setorsampah.dto.ApiResponse;
+import com.example.setorsampah.dto.BankCapacityRequest;
+import com.example.setorsampah.dto.BankCapacityResponse;
+import com.example.setorsampah.dto.WasteBankRequest;
+import com.example.setorsampah.dto.WasteBankResponse;
 import com.example.setorsampah.service.WasteBankService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/waste-banks")
 @RequiredArgsConstructor
+@Validated
 public class WasteBankController {
 
     private final WasteBankService bankService;
 
-    @PostMapping
-    public ResponseEntity<WasteBank> createBank(@RequestBody WasteBank bank) {
-        return new ResponseEntity<>(bankService.createBank(bank), HttpStatus.CREATED);
-    }
-
     @GetMapping
-    public ResponseEntity<List<WasteBank>> getAllBanks() {
-        return ResponseEntity.ok(bankService.getAllBanks());
+    public ResponseEntity<ApiResponse<List<WasteBankResponse>>> getBanks() {
+        return ResponseEntity.ok(ApiResponse.success(bankService.getBanks(), "Daftar bank sampah berhasil diambil"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WasteBank> getBankById(@PathVariable Long id) {
-        return bankService.getBankById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<WasteBankResponse>> getBankById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(bankService.getBankById(id), "Bank sampah ditemukan"));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<WasteBankResponse>> createBank(@Valid @RequestBody WasteBankRequest request) {
+        return new ResponseEntity<>(ApiResponse.success(bankService.createBank(request), "Bank sampah berhasil dibuat"), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<WasteBank> updateBank(@PathVariable Long id, @RequestBody WasteBank bankDetails) {
-        return ResponseEntity.ok(bankService.updateBank(id, bankDetails));
+    public ResponseEntity<ApiResponse<WasteBankResponse>> updateBank(@PathVariable Long id, @Valid @RequestBody WasteBankRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(bankService.updateBank(id, request), "Bank sampah berhasil diperbarui"));
     }
 
     @PostMapping("/{id}/capacities")
-    public ResponseEntity<BankCapacity> addCapacity(@PathVariable Long id,
-            @RequestParam Long categoryId,
-            @RequestParam Double maxCapacity) {
-        return new ResponseEntity<>(bankService.addCapacity(id, categoryId, maxCapacity), HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse<BankCapacityResponse>> addCapacity(@PathVariable Long id, @Valid @RequestBody BankCapacityRequest request) {
+        return new ResponseEntity<>(ApiResponse.success(bankService.addCapacity(id, request), "Kapasitas bank sampah berhasil ditambahkan"), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}/capacities")
-    public ResponseEntity<List<BankCapacity>> getCapacities(@PathVariable Long id) {
-        return ResponseEntity.ok(bankService.getCapacitiesForBank(id));
+    public ResponseEntity<ApiResponse<List<BankCapacityResponse>>> getCapacities(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(bankService.getCapacities(id), "Daftar kapasitas bank sampah berhasil diambil"));
     }
 
     @PutMapping("/capacities/{capacityId}")
-    public ResponseEntity<BankCapacity> updateCapacity(@PathVariable Long capacityId,
-            @RequestParam Double maxCapacity) {
-        return ResponseEntity.ok(bankService.updateCapacity(capacityId, maxCapacity));
+    public ResponseEntity<ApiResponse<BankCapacityResponse>> updateCapacity(@PathVariable Long capacityId, @RequestBody BankCapacityRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(bankService.updateCapacity(capacityId, request.getMaxCapacity()), "Kapasitas bank sampah berhasil diperbarui"));
     }
 }
