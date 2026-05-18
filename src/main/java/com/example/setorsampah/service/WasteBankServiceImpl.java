@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class WasteBankServiceImpl implements WasteBankService {
 
     private final WasteBankRepository bankRepository;
@@ -42,6 +43,7 @@ public class WasteBankServiceImpl implements WasteBankService {
     }
 
     @Override
+    @Transactional
     public WasteBankResponse createBank(WasteBankRequest request) {
         if (bankRepository.existsByName(request.getName())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Bank sampah sudah tersedia");
@@ -51,6 +53,7 @@ public class WasteBankServiceImpl implements WasteBankService {
     }
 
     @Override
+    @Transactional
     public WasteBankResponse updateBank(Long id, WasteBankRequest request) {
         return bankRepository.findById(id).map(bank -> {
             bank.setName(request.getName());
@@ -60,6 +63,7 @@ public class WasteBankServiceImpl implements WasteBankService {
     }
 
     @Override
+    @Transactional
     public void deleteBank(Long id) {
         if (!bankRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bank sampah tidak ditemukan");
@@ -100,6 +104,9 @@ public class WasteBankServiceImpl implements WasteBankService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kapasitas maksimum harus lebih besar dari nol");
         }
         return capacityRepository.findById(capacityId).map(capacity -> {
+            if (capacity.getUsedCapacity() > maxCapacity) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kapasitas maksimum tidak boleh kurang dari kapasitas terpakai");
+            }
             capacity.setMaxCapacity(maxCapacity);
             return WasteBankMapper.toCapacityResponse(capacityRepository.save(capacity));
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kapasitas bank sampah tidak ditemukan"));

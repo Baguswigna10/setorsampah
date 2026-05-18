@@ -3,6 +3,7 @@ package com.example.setorsampah.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.setorsampah.dto.DashboardResponse;
 import com.example.setorsampah.model.User;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DashboardServiceImpl implements DashboardService {
 
     private final UserRepository userRepository;

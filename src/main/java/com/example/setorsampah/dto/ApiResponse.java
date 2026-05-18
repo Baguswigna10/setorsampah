@@ -31,11 +31,11 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> successWithPage(Page<T> pageData, String message) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResponse<Page<T>> successWithPage(Page<T> pageData, String message) {
+        return ApiResponse.<Page<T>>builder()
                 .success(true)
                 .message(message)
-                .data(pageData.getContent())
+                .data(pageData)
                 .page(pageData.getNumber())
                 .size(pageData.getSize())
                 .totalElements(pageData.getTotalElements())
