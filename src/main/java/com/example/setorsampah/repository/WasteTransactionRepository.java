@@ -17,4 +17,5 @@ public interface WasteTransactionRepository extends JpaRepository<WasteTransacti
     List<WasteTransaction> findByBank(WasteBank bank);
     Page<WasteTransaction> findByUser(User user, Pageable pageable);
     Page<WasteTransaction> findByBank(WasteBank bank, Pageable pageable);
+    List<WasteTransaction> findByTransactionDateBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 }
