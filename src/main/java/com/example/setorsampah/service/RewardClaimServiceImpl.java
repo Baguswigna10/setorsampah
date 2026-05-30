@@ -83,7 +83,7 @@ public class RewardClaimServiceImpl implements RewardClaimService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tidak dapat melihat riwayat claim user lain");
         }
 
-        return claimRepository.findByUserOrderByClaimDateDesc(user).stream()
+        return claimRepository.findByUserIdOrderByClaimDateDesc(userId).stream()
                 .map(RewardMapper::toClaimResponse)
                 .toList();
     }

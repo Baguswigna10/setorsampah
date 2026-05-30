@@ -7,14 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Table(name = "rewards")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Reward {
@@ -26,9 +24,15 @@ public class Reward {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "required_points", nullable = false)
     private Double pointCost;
 
     @Column(nullable = false)
     private Integer stock;
+
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
+    private String imageUrl;
 }

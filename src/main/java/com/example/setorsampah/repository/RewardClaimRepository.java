@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.example.setorsampah.model.RewardClaim;
-import com.example.setorsampah.model.User;
 
 @Repository
 public interface RewardClaimRepository extends JpaRepository<RewardClaim, Long> {
-    List<RewardClaim> findByUserOrderByClaimDateDesc(User user);
+    List<RewardClaim> findByUserIdOrderByClaimDateDesc(Long userId);
+    List<RewardClaim> findAllByOrderByClaimDateDesc();
 }

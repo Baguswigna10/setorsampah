@@ -18,30 +18,26 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class RewardServiceImpl implements RewardService {
+public class RewardServiceImpl {
 
     private final RewardRepository rewardRepository;
 
-    @Override
     public List<RewardResponse> getAllRewards() {
         return rewardRepository.findAll().stream().map(RewardMapper::toResponse).toList();
     }
 
-    @Override
     public RewardResponse getRewardById(Long id) {
         return rewardRepository.findById(id)
                 .map(RewardMapper::toResponse)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reward tidak ditemukan"));
     }
 
-    @Override
     @Transactional
     public RewardResponse createReward(RewardRequest request) {
         Reward reward = RewardMapper.toEntity(request);
         return RewardMapper.toResponse(rewardRepository.save(reward));
     }
 
-    @Override
     @Transactional
     public RewardResponse updateReward(Long id, RewardRequest request) {
         Reward reward = rewardRepository.findById(id)
@@ -52,7 +48,6 @@ public class RewardServiceImpl implements RewardService {
         return RewardMapper.toResponse(rewardRepository.save(reward));
     }
 
-    @Override
     @Transactional
     public void deleteReward(Long id) {
         if (!rewardRepository.existsById(id)) {

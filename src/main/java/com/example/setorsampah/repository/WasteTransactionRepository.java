@@ -36,4 +36,6 @@ public interface WasteTransactionRepository extends JpaRepository<WasteTransacti
     @Query("SELECT COALESCE(SUM(td.weight), 0.0) FROM TransactionDetail td " +
             "JOIN td.category wc WHERE wc.wasteType = :wasteType")
     Double sumWeightByWasteType(@Param("wasteType") WasteType wasteType);
+    
+    List<WasteTransaction> findByTransactionDateBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 }
