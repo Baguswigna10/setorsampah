@@ -6,11 +6,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.setorsampah.model.User;
 import com.example.setorsampah.model.WasteBank;
 import com.example.setorsampah.model.WasteTransaction;
+import com.example.setorsampah.model.WasteType;
 
 @Repository
 public interface WasteTransactionRepository extends JpaRepository<WasteTransaction, Long> {
@@ -30,4 +32,8 @@ public interface WasteTransactionRepository extends JpaRepository<WasteTransacti
             "ORDER BY wc.name", 
             nativeQuery = true)
     List<Object[]> getTotalWeightByCategory();
+
+    @Query("SELECT COALESCE(SUM(td.weight), 0.0) FROM TransactionDetail td " +
+            "JOIN td.category wc WHERE wc.wasteType = :wasteType")
+    Double sumWeightByWasteType(@Param("wasteType") WasteType wasteType);
 }

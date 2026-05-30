@@ -1,7 +1,5 @@
 package com.example.setorsampah.dto;
 
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class TotalWasteReportDto {
-    private Long totalTransactions;
-    private Double totalWeight;
-    private Double totalPoints;
-    private List<WasteCategoryReportDto> categories;
+    private Double organik;
+    private Double anorganik;
+    private Double b3;
+    private Double total;
 }

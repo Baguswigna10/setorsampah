@@ -1,5 +1,7 @@
 package com.example.setorsampah.dto;
 
+import com.example.setorsampah.model.WasteType;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -19,4 +21,7 @@ public class WasteCategoryRequest {
     private Double pointPerKg;
 
     private String description;
+
+    @NotNull(message = "Tipe sampah tidak boleh kosong")
+    private WasteType wasteType;
 }

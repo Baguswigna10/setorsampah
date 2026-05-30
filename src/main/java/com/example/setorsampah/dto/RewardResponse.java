@@ -1,7 +1,5 @@
 package com.example.setorsampah.dto;
 
-import com.example.setorsampah.model.WasteType;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,10 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class WasteCategoryResponse {
+public class RewardResponse {
     private Long id;
     private String name;
-    private Double pointPerKg;
-    private String description;
-    private WasteType wasteType;
+    private Double pointCost;
+    private Integer stock;
 }

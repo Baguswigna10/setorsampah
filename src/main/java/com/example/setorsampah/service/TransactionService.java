@@ -11,4 +11,5 @@ public interface TransactionService {
     TransactionResponse getTransactionById(Long id);
     List<TransactionResponse> getTransactionsByUserId(Long userId);
     List<TransactionResponse> getTransactionsByBankId(Long bankId);
+    void deleteTransaction(Long id);
 }

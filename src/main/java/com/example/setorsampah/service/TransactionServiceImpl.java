@@ -22,6 +22,7 @@ import com.example.setorsampah.repository.UserRepository;
 import com.example.setorsampah.repository.WasteBankRepository;
 import com.example.setorsampah.repository.WasteCategoryRepository;
 import com.example.setorsampah.repository.WasteTransactionRepository;
+import com.example.setorsampah.security.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,16 +36,23 @@ public class TransactionServiceImpl implements TransactionService {
     private final WasteBankRepository bankRepository;
     private final WasteCategoryRepository categoryRepository;
     private final BankCapacityRepository capacityRepository;
+    private final SecurityUtils securityUtils;
 
     @Override
     @Transactional
     public TransactionResponse createTransaction(TransactionRequest request) {
-        if (request.getUserId() == null || request.getBankId() == null || request.getItems() == null || request.getItems().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data transaksi tidak lengkap");
-        }
-
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User tidak ditemukan"));
+
+        if (!user.canProcessTransaction()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User tidak dapat melakukan transaksi setoran sampah");
+        }
+
+        Long currentUserId = securityUtils.getCurrentUserId();
+        if (currentUserId != null && !currentUserId.equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tidak dapat membuat transaksi untuk user lain");
+        }
+
         WasteBank bank = bankRepository.findById(request.getBankId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bank sampah tidak ditemukan"));
 
@@ -57,9 +65,6 @@ public class TransactionServiceImpl implements TransactionService {
         double totalPoint = 0.0;
 
         for (var item : request.getItems()) {
-            if (item.getCategoryId() == null || item.getWeight() == null || item.getWeight() <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Item transaksi tidak valid");
-            }
             WasteCategory category = categoryRepository.findById(item.getCategoryId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kategori sampah tidak ditemukan"));
             BankCapacity capacity = capacityRepository.findByBankAndCategory(bank, category)
@@ -81,6 +86,9 @@ public class TransactionServiceImpl implements TransactionService {
             detail.setPoint(point);
             transaction.getDetails().add(detail);
         }
+
+        double bonusPoint = user.calculateBonusPoint(totalPoint);
+        totalPoint += bonusPoint;
 
         transaction.setTotalWeight(totalWeight);
         transaction.setTotalPoint(totalPoint);
@@ -108,6 +116,12 @@ public class TransactionServiceImpl implements TransactionService {
     public List<TransactionResponse> getTransactionsByUserId(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User tidak ditemukan"));
+
+        Long currentUserId = securityUtils.getCurrentUserId();
+        if (currentUserId != null && !securityUtils.isAdmin() && !currentUserId.equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tidak dapat melihat transaksi user lain");
+        }
+
         return transactionRepository.findByUser(user).stream().map(TransactionMapper::toResponse).toList();
     }
 
@@ -116,5 +130,27 @@ public class TransactionServiceImpl implements TransactionService {
         WasteBank bank = bankRepository.findById(bankId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bank sampah tidak ditemukan"));
         return transactionRepository.findByBank(bank).stream().map(TransactionMapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteTransaction(Long id) {
+        WasteTransaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaksi tidak ditemukan"));
+
+        User user = transaction.getUser();
+        user.setPoint(Math.max(0.0, user.getPoint() - transaction.getTotalPoint()));
+        userRepository.save(user);
+
+        for (TransactionDetail detail : transaction.getDetails()) {
+            BankCapacity capacity = capacityRepository.findByBankAndCategory(transaction.getBank(), detail.getCategory())
+                    .orElse(null);
+            if (capacity != null) {
+                capacity.setUsedCapacity(Math.max(0.0, capacity.getUsedCapacity() - detail.getWeight()));
+                capacityRepository.save(capacity);
+            }
+        }
+
+        transactionRepository.delete(transaction);
     }
 }

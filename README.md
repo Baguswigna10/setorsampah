@@ -1,79 +1,251 @@
 # SetorSampah Backend
 
-SetorSampah adalah aplikasi backend Spring Boot untuk sistem digital bank sampah. Proyek ini menyediakan REST API untuk manajemen user, kategori sampah, bank sampah, kapasitas kategori, transaksi setoran sampah, dan dashboard ringkas.
+SetorSampah adalah platform manajemen bank sampah digital berbasis REST API. Aplikasi ini mendukung manajemen user, kategori sampah, bank sampah, transaksi setoran, akumulasi poin, pelaporan, dan penukaran reward.
 
 ## Teknologi
+
 - Java 17
 - Spring Boot 4.0.6
 - Spring Data JPA
+- Spring Security + JWT
 - MySQL
 - Maven
 - Lombok
 - Jakarta Validation
+- JUnit 5
 
 ## Struktur Proyek
-- `src/main/java/com/example/setorsampah/controller` - REST controller
-- `src/main/java/com/example/setorsampah/service` - service interface dan implementasi
-- `src/main/java/com/example/setorsampah/repository` - JPA repository
-- `src/main/java/com/example/setorsampah/model` - entity JPA
-- `src/main/java/com/example/setorsampah/dto` - request / response DTO
-- `src/main/java/com/example/setorsampah/mapper` - konversi entity <-> DTO
-- `src/main/java/com/example/setorsampah/exception` - global exception handling
-- `src/main/java/com/example/setorsampah/config` - konfigurasi aplikasi
 
-## Konfigurasi Database
-Atur koneksi MySQL di `src/main/resources/application.properties`:
+```
+src/main/java/com/example/setorsampah/
+├── config/          # Security, JWT filter, password initializer
+├── controller/      # REST endpoints
+├── dto/             # Request & response objects
+├── exception/       # Global exception handler
+├── mapper/          # Entity ↔ DTO conversion
+├── model/           # JPA entities (User inheritance, Reward, dll.)
+├── repository/      # Spring Data JPA repositories
+├── security/        # UserPrincipal, SecurityUtils
+└── service/         # Business logic
+```
+
+## Instalasi & Database Setup
+
+### Prasyarat
+
+- JDK 17+
+- MySQL 8.x
+
+### Buat Database
+
+```sql
+CREATE DATABASE setorsampah;
+```
+
+### Konfigurasi
+
+Edit `src/main/resources/application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/setorsampah
 spring.datasource.username=root
 spring.datasource.password=
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.sql.init.mode=always
+jwt.secret=SetorSampahSecretKeyForJwtTokenGeneration2026SecureKey
+jwt.expiration-ms=86400000
 ```
 
 ## Menjalankan Aplikasi
-Pastikan MySQL berjalan dan database `setorsampah` tersedia, lalu jalankan:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-## API Endpoint Utama
-- `GET /api/users` - daftar user dengan pagination dan pencarian
-- `POST /api/users` - tambah user baru
-- `GET /api/users/{id}` - ambil user berdasarkan ID
-- `PUT /api/users/{id}` - update user
-- `DELETE /api/users/{id}` - hapus user
+Aplikasi berjalan di `http://localhost:8080`
 
-- `GET /api/categories` - daftar kategori sampah dengan pagination
-- `POST /api/categories` - tambah kategori sampah
-- `GET /api/categories/{id}` - ambil kategori
-- `PUT /api/categories/{id}` - update kategori
-- `DELETE /api/categories/{id}` - hapus kategori
+## JWT Authentication
 
-- `GET /api/waste-banks` - daftar bank sampah
-- `POST /api/waste-banks` - tambah bank sampah
-- `GET /api/waste-banks/{id}` - detail bank sampah
-- `PUT /api/waste-banks/{id}` - update bank sampah
-- `POST /api/waste-banks/{id}/capacities` - tambah kapasitas kategori di bank
-- `GET /api/waste-banks/{id}/capacities` - list kapasitas bank
-- `PUT /api/waste-banks/capacities/{capacityId}` - update kapasitas
+Semua endpoint (kecuali login) memerlukan header:
 
-- `POST /api/transactions` - buat transaksi setoran sampah
-- `GET /api/transactions` - daftar transaksi
-- `GET /api/transactions/{id}` - transaksi by ID
-- `GET /api/transactions/users/{userId}` - transaksi user
-- `GET /api/transactions/banks/{bankId}` - transaksi bank
+```
+Authorization: Bearer <jwt-token>
+```
 
-- `GET /api/dashboard/summary` - ringkasan total pengguna, transaksi, sampah, dan poin
+### Login
 
-## ERD Database
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@setorsampah.id",
+  "password": "admin123"
+}
+```
+
+**Response:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Akun Sample (data.sql)
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@setorsampah.id | admin123 | ADMIN |
+| budi@example.com | password | WARGA |
+
+Password di-hash otomatis dengan BCrypt saat startup pertama.
+
+## Role Authorization
+
+| Role | Hak Akses |
+|------|-----------|
+| **ADMIN** | CRUD kategori, bank sampah, kapasitas, reward; hapus transaksi; kelola user |
+| **WARGA** | Lihat data, buat transaksi, lihat riwayat sendiri, tukar reward |
+
+## API Documentation
+
+### Users — `/api/users`
+
+| Method | Endpoint | Role | Deskripsi |
+|--------|----------|------|-----------|
+| GET | `/api/users` | Auth | Daftar user (pagination) |
+| GET | `/api/users/{id}` | Auth | Detail user |
+| POST | `/api/users` | ADMIN | Buat user |
+| PUT | `/api/users/{id}` | ADMIN | Update user |
+| DELETE | `/api/users/{id}` | ADMIN | Hapus user |
+
+### Categories — `/api/categories`
+
+| Method | Endpoint | Role | Deskripsi |
+|--------|----------|------|-----------|
+| GET | `/api/categories` | Auth | Daftar kategori |
+| POST | `/api/categories` | ADMIN | Buat kategori |
+| PUT | `/api/categories/{id}` | ADMIN | Update kategori |
+| DELETE | `/api/categories/{id}` | ADMIN | Hapus kategori |
+
+**Request body contoh:**
+
+```json
+{
+  "name": "Plastik",
+  "pointPerKg": 5.0,
+  "description": "Sampah plastik",
+  "wasteType": "ANORGANIK"
+}
+```
+
+### Waste Banks — `/api/waste-banks`
+
+| Method | Endpoint | Role |
+|--------|----------|------|
+| GET | `/api/waste-banks` | Auth |
+| POST | `/api/waste-banks` | ADMIN |
+| PUT | `/api/waste-banks/{id}` | ADMIN |
+| DELETE | `/api/waste-banks/{id}` | ADMIN |
+| POST | `/api/waste-banks/{id}/capacities` | ADMIN |
+| GET | `/api/waste-banks/{id}/capacities` | Auth |
+| PUT | `/api/waste-banks/capacities/{capacityId}` | ADMIN |
+
+### Transactions — `/api/transactions`
+
+| Method | Endpoint | Role |
+|--------|----------|------|
+| POST | `/api/transactions` | WARGA |
+| GET | `/api/transactions` | Auth |
+| GET | `/api/transactions/{id}` | Auth |
+| GET | `/api/transactions/users/{userId}` | Auth (own history for WARGA) |
+| GET | `/api/transactions/banks/{bankId}` | Auth |
+| DELETE | `/api/transactions/{id}` | ADMIN |
+
+**Contoh create transaction:**
+
+```json
+{
+  "userId": 2,
+  "bankId": 1,
+  "items": [
+    { "categoryId": 1, "weight": 10.0 }
+  ]
+}
+```
+
+Warga mendapat bonus poin 10% dari total transaksi (polimorfisme `calculateBonusPoint()`).
+
+### Rewards — `/api/rewards`
+
+| Method | Endpoint | Role |
+|--------|----------|------|
+| GET | `/api/rewards` | Auth |
+| POST | `/api/rewards` | ADMIN |
+| PUT | `/api/rewards/{id}` | ADMIN |
+| DELETE | `/api/rewards/{id}` | ADMIN |
+
+### Claims — `/api/claims`
+
+| Method | Endpoint | Role |
+|--------|----------|------|
+| POST | `/api/claims` | WARGA |
+| GET | `/api/claims/user/{userId}` | Auth (own history for WARGA) |
+
+**Contoh claim reward:**
+
+```json
+{
+  "userId": 2,
+  "rewardId": 1
+}
+```
+
+### Reports — `/api/reports`
+
+```http
+GET /api/reports/total-waste
+Authorization: Bearer <token>
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Laporan total sampah berhasil diambil",
+  "data": {
+    "organik": 120.5,
+    "anorganik": 330.2,
+    "b3": 10.7,
+    "total": 461.4
+  }
+}
+```
+
+### Dashboard — `/api/dashboard/summary`
+
+Ringkasan total user, transaksi, berat sampah, dan poin.
+
+## OOP Design
+
+```
+User (abstract) implements PointCalculatable
+├── Admin   → calculateBonusPoint() = 0, canProcessTransaction() = false
+└── Warga   → calculateBonusPoint() = 10% bonus, canProcessTransaction() = true
+```
+
+- **Inheritance:** JPA SINGLE_TABLE dengan kolom `role` sebagai discriminator
+- **Polymorphism:** `calculateBonusPoint()` dan `canProcessTransaction()` di-override per subclass
+- **Abstraction:** Interface `PointCalculatable` untuk kontrak perhitungan poin
+
+## ERD
+
 ```mermaid
 erDiagram
     users {
-        int id PK
+        bigint id PK
         string nama
         string alamat
         string role
@@ -82,70 +254,75 @@ erDiagram
         string password
     }
     waste_categories {
-        int id PK
+        bigint id PK
         string name
         double point_per_kg
         string description
+        string waste_type
     }
     waste_banks {
-        int id PK
+        bigint id PK
         string name
         string address
     }
     bank_capacities {
-        int id PK
-        int bank_id FK
-        int category_id FK
+        bigint id PK
+        bigint bank_id FK
+        bigint category_id FK
         double max_capacity
         double used_capacity
     }
     transactions {
-        int id PK
-        int user_id FK
-        int bank_id FK
+        bigint id PK
+        bigint user_id FK
+        bigint bank_id FK
         double total_weight
         double total_point
         datetime transaction_date
     }
     transaction_details {
-        int id PK
-        int transaction_id FK
-        int category_id FK
+        bigint id PK
+        bigint transaction_id FK
+        bigint category_id FK
         double weight
         double point
     }
+    rewards {
+        bigint id PK
+        string name
+        double point_cost
+        int stock
+    }
+    reward_claims {
+        bigint id PK
+        bigint user_id FK
+        bigint reward_id FK
+        datetime claim_date
+        string status
+    }
 
-    users ||--o{ transactions : "has"
+    users ||--o{ transactions : "creates"
+    users ||--o{ reward_claims : "claims"
     waste_banks ||--o{ transactions : "receives"
-    waste_banks ||--o{ bank_capacities : "stores"
+    waste_banks ||--o{ bank_capacities : "has"
     waste_categories ||--o{ bank_capacities : "assigned"
-    transactions ||--o{ transaction_details : "contains"
     waste_categories ||--o{ transaction_details : "categorizes"
+    transactions ||--o{ transaction_details : "contains"
+    rewards ||--o{ reward_claims : "redeemed"
 ```
 
-## Flowchart Sistem
-```mermaid
-flowchart TD
-    A[User kirim request API] --> B[Validasi request]
-    B --> C{API endpoint}
-    C -->|Users| D[UserController]
-    C -->|Categories| E[WasteCategoryController]
-    C -->|Banks| F[WasteBankController]
-    C -->|Transactions| G[TransactionController]
-    G --> H[TransactionServiceImpl]
-    H --> I[BankCapacityRepository]
-    H --> J[WasteTransactionRepository]
-    H --> K[UserRepository]
-    H --> L[WasteCategoryRepository]
-    H --> M[WasteBankRepository]
-    D --> N[UserServiceImpl]
-    E --> O[WasteCategoryServiceImpl]
-    F --> P[WasteBankServiceImpl]
-    D --> N
-    O --> E
-    P --> F
-    N --> Q[Database MySQL]
-    O --> Q
-    P --> Q
-    H --> Q
+## Testing
+
+```bash
+./mvnw test
 ```
+
+| Test | Tipe | Cakupan |
+|------|------|---------|
+| `TransactionServiceTest` | Unit | Bonus poin, delete rollback, validasi admin |
+| `RewardClaimServiceTest` | Unit | Deduction poin/stok, validasi saldo |
+| `AuthIntegrationTest` | Integration | Login JWT, proteksi endpoint |
+| `TransactionIntegrationTest` | Integration | Create transaksi oleh WARGA |
+| `RewardClaimIntegrationTest` | Integration | Claim reward end-to-end |
+
+Tests menggunakan H2 in-memory database (`src/test/resources/application.properties`).

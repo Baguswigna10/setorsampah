@@ -50,6 +50,7 @@ public class WasteCategoryServiceImpl implements WasteCategoryService {
             category.setName(request.getName());
             category.setPointPerKg(request.getPointPerKg());
             category.setDescription(request.getDescription());
+            category.setWasteType(request.getWasteType());
             return WasteCategoryMapper.toResponse(categoryRepository.save(category));
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kategori sampah tidak ditemukan"));
     }

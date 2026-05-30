@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,5 +52,11 @@ public class TransactionController {
     @GetMapping("/banks/{bankId}")
     public ResponseEntity<ApiResponse<List<TransactionResponse>>> getTransactionsByBank(@PathVariable Long bankId) {
         return ResponseEntity.ok(ApiResponse.success(transactionService.getTransactionsByBankId(bankId), "Daftar transaksi bank berhasil diambil"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTransaction(@PathVariable Long id) {
+        transactionService.deleteTransaction(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Transaksi berhasil dihapus"));
     }
 }

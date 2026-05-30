@@ -10,7 +10,7 @@ public class WasteCategoryMapper {
         if (category == null) {
             return null;
         }
-        return new WasteCategoryResponse(category.getId(), category.getName(), category.getPointPerKg(), category.getDescription());
+        return new WasteCategoryResponse(category.getId(), category.getName(), category.getPointPerKg(), category.getDescription(), category.getWasteType());
     }
 
     public static WasteCategory toEntity(WasteCategoryRequest request) {
@@ -21,6 +21,7 @@ public class WasteCategoryMapper {
         category.setName(request.getName());
         category.setPointPerKg(request.getPointPerKg());
         category.setDescription(request.getDescription());
+        category.setWasteType(request.getWasteType());
         return category;
     }
 }
