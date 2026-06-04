@@ -12,4 +12,6 @@ public class RewardResponse {
     private String name;
     private Double pointCost;
     private Integer stock;
+    private String description;
+    private String imageUrl;
 }

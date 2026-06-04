@@ -45,11 +45,12 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User tidak ditemukan"));
 
         if (!user.canProcessTransaction()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User tidak dapat melakukan transaksi setoran sampah");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User yang dipilih (role: " + user.getRole() + ") tidak dapat melakukan transaksi setoran sampah. Hanya user WARGA yang bisa.");
         }
 
         Long currentUserId = securityUtils.getCurrentUserId();
-        if (currentUserId != null && !currentUserId.equals(user.getId())) {
+        // Admin boleh membuat transaksi atas nama warga manapun
+        if (currentUserId != null && !securityUtils.isAdmin() && !currentUserId.equals(user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tidak dapat membuat transaksi untuk user lain");
         }
 

@@ -1,5 +1,14 @@
 export const API_BASE_URL = '/api'; // Proxied via Vite
 
+// Helper function to get auth headers with token
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  };
+};
+
 export const loginUser = async (email, password) => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -9,7 +18,17 @@ export const loginUser = async (email, password) => {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Login gagal');
-    return result.data;
+    
+    // result.data contains { token, user }
+    const { token, user } = result.data;
+    
+    // Save token to localStorage
+    if (token) {
+      localStorage.setItem('authToken', token);
+    }
+    
+    // Return only user object (not token)
+    return user;
   } catch (error) {
     throw error;
   }
@@ -32,7 +51,9 @@ export const registerUser = async (nama, email, password, alamat) => {
 
 export const fetchDashboardSummary = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/summary`);
+    const response = await fetch(`${API_BASE_URL}/dashboard/summary`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch dashboard data');
     }
@@ -46,7 +67,9 @@ export const fetchDashboardSummary = async () => {
 
 export const fetchChartData = async (filter = 'daily') => {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/chart?filter=${filter}`);
+    const response = await fetch(`${API_BASE_URL}/dashboard/chart?filter=${filter}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Failed to fetch chart data');
     const result = await response.json();
     return result.data;
@@ -58,7 +81,9 @@ export const fetchChartData = async (filter = 'daily') => {
 
 export const fetchRewards = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/rewards`);
+    const response = await fetch(`${API_BASE_URL}/rewards`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Failed to fetch rewards');
     const result = await response.json();
     return result.data;
@@ -72,7 +97,7 @@ export const createReward = async (rewardData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/rewards`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(rewardData)
     });
     const result = await response.json();
@@ -87,7 +112,7 @@ export const updateReward = async (id, rewardData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/rewards/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(rewardData)
     });
     const result = await response.json();
@@ -101,7 +126,8 @@ export const updateReward = async (id, rewardData) => {
 export const deleteReward = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/rewards/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Gagal menghapus reward');
@@ -115,7 +141,7 @@ export const claimReward = async (rewardId, userId = 1) => {
   try {
     const response = await fetch(`${API_BASE_URL}/rewards/claim`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ rewardId, userId })
     });
     const result = await response.json();
@@ -131,7 +157,9 @@ export const claimReward = async (rewardId, userId = 1) => {
 // Waste Categories (CRUD Admin)
 export const fetchCategories = async (search = '', page = 0, size = 100) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/categories?search=${encodeURIComponent(search)}&page=${page}&size=${size}`);
+    const response = await fetch(`${API_BASE_URL}/categories?search=${encodeURIComponent(search)}&page=${page}&size=${size}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil kategori sampah');
     const result = await response.json();
     return result.data; // Page object containing content
@@ -145,7 +173,7 @@ export const createCategory = async (categoryData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/categories`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(categoryData)
     });
     const result = await response.json();
@@ -160,7 +188,7 @@ export const updateCategory = async (id, categoryData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(categoryData)
     });
     const result = await response.json();
@@ -174,7 +202,8 @@ export const updateCategory = async (id, categoryData) => {
 export const deleteCategory = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Gagal menghapus kategori');
@@ -187,7 +216,9 @@ export const deleteCategory = async (id) => {
 // Reward Claims
 export const fetchAllClaims = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/rewards/claims`);
+    const response = await fetch(`${API_BASE_URL}/rewards/claims`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil daftar klaim reward');
     const result = await response.json();
     return result.data;
@@ -199,7 +230,9 @@ export const fetchAllClaims = async () => {
 
 export const fetchClaimsByUserId = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/rewards/claims/users/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/rewards/claims/users/${userId}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil riwayat klaim');
     const result = await response.json();
     return result.data;
@@ -212,7 +245,8 @@ export const fetchClaimsByUserId = async (userId) => {
 export const confirmClaim = async (claimId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/rewards/claims/${claimId}/confirm`, {
-      method: 'POST'
+      method: 'POST',
+      headers: getAuthHeaders()
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Gagal mengonfirmasi klaim');
@@ -225,7 +259,9 @@ export const confirmClaim = async (claimId) => {
 // User Transactions
 export const fetchTransactionsByUserId = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/transactions/users/${userId}`);
+    const response = await fetch(`${API_BASE_URL}/transactions/users/${userId}`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil riwayat transaksi setoran');
     const result = await response.json();
     return result.data;
@@ -237,7 +273,9 @@ export const fetchTransactionsByUserId = async (userId) => {
 
 export const fetchAllTransactions = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/transactions`);
+    const response = await fetch(`${API_BASE_URL}/transactions`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil daftar transaksi');
     const result = await response.json();
     return result.data;
@@ -251,11 +289,20 @@ export const createTransaction = async (transactionData) => {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(transactionData)
     });
+    if (!response.ok) {
+      let errorMessage = `Gagal menyimpan transaksi setoran sampah (HTTP ${response.status})`;
+      try {
+        const result = await response.json();
+        if (result.message) errorMessage = result.message;
+      } catch (_) {
+        // Response body is not valid JSON (e.g. 403 Forbidden with empty body)
+      }
+      throw new Error(errorMessage);
+    }
     const result = await response.json();
-    if (!response.ok) throw new Error(result.message || 'Gagal menyimpan transaksi setoran sampah');
     return result.data;
   } catch (error) {
     throw error;
@@ -266,7 +313,9 @@ export const createTransaction = async (transactionData) => {
 export const fetchUsers = async () => {
   try {
     // Adding size=1000 to fetch a large chunk of users for the dropdown
-    const response = await fetch(`${API_BASE_URL}/users?size=1000`);
+    const response = await fetch(`${API_BASE_URL}/users?size=1000`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil daftar pengguna');
     const result = await response.json();
     return result.data?.content || [];
@@ -276,10 +325,26 @@ export const fetchUsers = async () => {
   }
 };
 
+export const fetchUserById = async (userId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Gagal mengambil data pengguna');
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching user by id:", error);
+    throw error;
+  }
+};
+
 // Waste Banks
 export const fetchBanks = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/waste-banks`);
+    const response = await fetch(`${API_BASE_URL}/waste-banks`, {
+      headers: getAuthHeaders()
+    });
     if (!response.ok) throw new Error('Gagal mengambil daftar bank sampah');
     const result = await response.json();
     return result.data;

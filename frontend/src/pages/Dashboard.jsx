@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Users, Receipt, Scale, Award, Leaf, History, Gift, Download } from 'lucide-react';
-import { fetchDashboardSummary, fetchChartData, fetchTransactionsByUserId, fetchClaimsByUserId } from '../services/api';
+import { Users, Receipt, Scale, Award, Download } from 'lucide-react';
+import { fetchDashboardSummary, fetchChartData } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const Dashboard = () => {
@@ -14,49 +14,8 @@ const Dashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        if (user?.role === 'ADMIN') {
-          const summary = await fetchDashboardSummary();
-          setData(summary);
-        } else if (user?.role === 'USER' && user?.id) {
-          // Build user-specific dashboard from real API data
-          const [txs, claims] = await Promise.all([
-            fetchTransactionsByUserId(user.id),
-            fetchClaimsByUserId(user.id)
-          ]);
-
-          const totalTrashKg = (txs || []).reduce((sum, tx) => sum + (tx.totalWeight || 0), 0);
-
-          const formatDate = (dateStr) => {
-            if (!dateStr) return '-';
-            try {
-              return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            } catch { return dateStr; }
-          };
-
-          const depositActivities = (txs || []).map(tx => ({
-            type: 'DEPOSIT',
-            title: `Setor Sampah ${tx.items?.map(i => i.categoryName).join(', ') || ''}`,
-            date: formatDate(tx.transactionDate),
-            points: `+ ${tx.totalPoint?.toLocaleString('id-ID') || 0} Poin`,
-            extra: `${tx.totalWeight || 0} Kg`,
-            rawDate: tx.transactionDate
-          }));
-
-          const claimActivities = (claims || []).map(claim => ({
-            type: 'CLAIM',
-            title: `Tukar ${claim.reward?.name || 'Hadiah'}`,
-            date: formatDate(claim.claimDate),
-            points: `- ${claim.pointsSpent?.toLocaleString('id-ID') || 0} Poin`,
-            extra: claim.status === 'PENDING' ? 'Menunggu Konfirmasi' : 'Berhasil',
-            rawDate: claim.claimDate
-          }));
-
-          const recentActivities = [...depositActivities, ...claimActivities]
-            .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate))
-            .slice(0, 5);
-
-          setData({ totalTrashKg, recentActivities });
-        }
+        const summary = await fetchDashboardSummary();
+        setData(summary);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -105,69 +64,6 @@ const Dashboard = () => {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <p style={{ color: 'var(--text-muted)' }}>Memuat data dashboard...</p>
-      </div>
-    );
-  }
-
-  if (user?.role === 'USER') {
-    return (
-      <div className="animate-fade-in">
-        <header className="page-header" style={{ marginBottom: '40px' }}>
-          <div>
-            <h1 className="page-title" style={{ color: 'var(--primary-color)' }}>Halo, {user.nama}! 👋</h1>
-            <p className="page-subtitle">Selamat datang di SetorSampah. Mari mulai menabung sampah hari ini.</p>
-          </div>
-        </header>
-
-        <div className="stats-grid">
-          <div className="glass-card delay-100 animate-fade-in" style={{ background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))', color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div style={{ background: 'rgba(255,255,255,0.2)', padding: '12px', borderRadius: 'var(--radius-md)' }}>
-                <Award size={32} color="white" />
-              </div>
-            </div>
-            <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>Total Saldo Poin Anda</p>
-            <h2 style={{ fontSize: '48px', margin: 0, fontWeight: '700', letterSpacing: '-1px' }}>{user.point?.toLocaleString('id-ID') || 0}</h2>
-          </div>
-
-          <div className="glass-card delay-200 animate-fade-in" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
-            <div style={{ background: 'var(--primary-light)', padding: '16px', borderRadius: '50%', color: 'var(--primary-color)' }}>
-              <Scale size={32} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: '24px', margin: 0 }}>{data?.totalTrashKg?.toLocaleString('id-ID') || 0} Kg</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>Total Sampah Disetor</p>
-            </div>
-          </div>
-        </div>
-
-        <h2 style={{ fontSize: '20px', marginBottom: '16px', marginTop: '32px' }}>Aktivitas Terakhir</h2>
-        <div className="glass-card delay-300 animate-fade-in">
-          {(!data?.recentActivities || data.recentActivities.length === 0) ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '12px' }}>
-              <History size={36} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Belum ada aktivitas tercatat.</p>
-            </div>
-          ) : (
-            data.recentActivities.map((item, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: idx !== data.recentActivities.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ background: item.type === 'DEPOSIT' ? 'var(--primary-light)' : '#fee2e2', color: item.type === 'DEPOSIT' ? 'var(--primary-color)' : 'var(--danger)', padding: '12px', borderRadius: 'var(--radius-sm)' }}>
-                    {item.type === 'DEPOSIT' ? <Leaf size={20} /> : <Gift size={20} />}
-                  </div>
-                  <div>
-                    <h4 style={{ margin: 0 }}>{item.title}</h4>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>{item.date}</p>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: 0, fontWeight: '600', color: item.type === 'DEPOSIT' ? 'var(--success)' : 'var(--danger)' }}>{item.points}</p>
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>{item.extra}</p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
       </div>
     );
   }

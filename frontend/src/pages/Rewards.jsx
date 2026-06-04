@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Gift, CheckCircle, AlertCircle } from 'lucide-react';
-import { fetchRewards, claimReward } from '../services/api';
+import { fetchRewards, claimReward, fetchUserById } from '../services/api';
 
 const Rewards = () => {
   const { user } = useOutletContext() || { user: null };
@@ -12,7 +12,17 @@ const Rewards = () => {
 
   useEffect(() => {
     loadRewards();
-  }, []);
+    // Fetch fresh point balance from backend
+    if (user?.id) {
+      fetchUserById(user.id)
+        .then(freshUser => {
+          if (freshUser?.point != null) {
+            setUserPoints(freshUser.point);
+          }
+        })
+        .catch(err => console.error('Error fetching user points:', err));
+    }
+  }, [user]);
 
   const loadRewards = async () => {
     setLoading(true);
@@ -32,8 +42,8 @@ const Rewards = () => {
       return;
     }
 
-    if (userPoints < reward.requiredPoints) {
-      setMessage({ type: 'error', text: `Poin Anda kurang untuk menukar reward ini. Butuh ${reward.requiredPoints.toLocaleString('id-ID')} poin.` });
+    if (userPoints < reward.pointCost) {
+      setMessage({ type: 'error', text: `Poin Anda kurang untuk menukar reward ini. Butuh ${reward.pointCost.toLocaleString('id-ID')} poin.` });
       return;
     }
 
@@ -47,7 +57,7 @@ const Rewards = () => {
       await claimReward(reward.id, user.id);
       
       // Kurangi saldo poin dan stok di tampilan lokal untuk respons instan
-      setUserPoints(prev => prev - reward.requiredPoints);
+      setUserPoints(prev => prev - reward.pointCost);
       setRewards(prev => prev.map(r => r.id === reward.id ? { ...r, stock: r.stock - 1 } : r));
       
       setMessage({ 
@@ -128,7 +138,7 @@ const Rewards = () => {
             <p style={{ color: 'var(--text-muted)', fontSize: '14px', flex: 1, marginBottom: '16px' }}>{reward.description}</p>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <span style={{ fontWeight: '700', color: 'var(--primary-color)', fontSize: '20px' }}>{reward.requiredPoints} Poin</span>
+              <span style={{ fontWeight: '700', color: 'var(--primary-color)', fontSize: '20px' }}>{reward.pointCost} Poin</span>
               <span style={{ fontSize: '12px', color: reward.stock > 0 ? 'var(--text-muted)' : 'var(--danger)', fontWeight: '600' }}>
                 {reward.stock > 0 ? `Sisa: ${reward.stock}` : 'Habis'}
               </span>
@@ -136,24 +146,24 @@ const Rewards = () => {
 
             <button 
               onClick={() => handleClaim(reward)}
-              disabled={reward.stock <= 0 || userPoints < reward.requiredPoints}
+              disabled={reward.stock <= 0 || userPoints < reward.pointCost}
               style={{
                 width: '100%',
                 padding: '12px',
                 borderRadius: 'var(--radius-sm)',
-                background: (reward.stock <= 0 || userPoints < reward.requiredPoints) ? 'var(--border-color)' : 'var(--primary-color)',
-                color: (reward.stock <= 0 || userPoints < reward.requiredPoints) ? 'var(--text-muted)' : 'white',
+                background: (reward.stock <= 0 || userPoints < reward.pointCost) ? 'var(--border-color)' : 'var(--primary-color)',
+                color: (reward.stock <= 0 || userPoints < reward.pointCost) ? 'var(--text-muted)' : 'white',
                 fontWeight: '600',
                 transition: 'var(--transition)',
-                cursor: (reward.stock <= 0 || userPoints < reward.requiredPoints) ? 'not-allowed' : 'pointer'
+                cursor: (reward.stock <= 0 || userPoints < reward.pointCost) ? 'not-allowed' : 'pointer'
               }}
               onMouseOver={(e) => {
-                if(reward.stock > 0 && userPoints >= reward.requiredPoints) {
+                if(reward.stock > 0 && userPoints >= reward.pointCost) {
                   e.currentTarget.style.background = 'var(--primary-hover)';
                 }
               }}
               onMouseOut={(e) => {
-                if(reward.stock > 0 && userPoints >= reward.requiredPoints) {
+                if(reward.stock > 0 && userPoints >= reward.pointCost) {
                   e.currentTarget.style.background = 'var(--primary-color)';
                 }
               }}

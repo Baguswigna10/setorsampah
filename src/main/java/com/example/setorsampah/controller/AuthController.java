@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,11 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.setorsampah.dto.ApiResponse;
 import com.example.setorsampah.dto.LoginRequest;
+import com.example.setorsampah.dto.LoginResponse;
 import com.example.setorsampah.dto.RegisterRequest;
 import com.example.setorsampah.dto.UserResponse;
 import com.example.setorsampah.mapper.UserMapper;
 import com.example.setorsampah.model.User;
 import com.example.setorsampah.repository.UserRepository;
+import com.example.setorsampah.service.JwtService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,17 +29,21 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
         
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            // Simple plain text password check for simulation (In real app, use BCrypt)
-            if (user.getPassword().equals(request.getPassword())) {
+            // Gunakan BCrypt untuk membandingkan password
+            if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 UserResponse userResponse = UserMapper.toResponse(user);
-                return ResponseEntity.ok(ApiResponse.success(userResponse, "Login berhasil"));
+                String token = jwtService.generateToken(user.getEmail(), user.getRole(), user.getId());
+                LoginResponse loginResponse = new LoginResponse(token, userResponse);
+                return ResponseEntity.ok(ApiResponse.success(loginResponse, "Login berhasil"));
             }
         }
         
@@ -55,7 +62,7 @@ public class AuthController {
         User user = UserMapper.createUserByRole("WARGA");
         user.setNama(request.getNama());
         user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setAlamat(request.getAlamat());
         user.setPoint(0.0);
 

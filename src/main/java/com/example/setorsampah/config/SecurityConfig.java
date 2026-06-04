@@ -30,7 +30,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/categories/**", "/api/waste-banks/**", "/api/rewards").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/categories/**", "/api/waste-banks/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/categories/**", "/api/waste-banks/**").hasRole("ADMIN")
@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/transactions").hasRole("WARGA")
+                .requestMatchers(HttpMethod.POST, "/api/transactions").hasAnyRole("ADMIN", "WARGA")
                 .requestMatchers(HttpMethod.POST, "/api/claims").hasRole("WARGA")
                 .anyRequest().authenticated()
             )

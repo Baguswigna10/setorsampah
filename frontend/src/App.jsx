@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import UserDashboard from './pages/UserDashboard';
 import Rewards from './pages/Rewards';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -27,6 +28,32 @@ const Placeholder = ({ title }) => (
 
 function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize user from localStorage on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    if (token && userData) {
+      setUser(JSON.parse(userData));
+    }
+    setLoading(false);
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem('userData', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   // Protected Route Wrapper
   const ProtectedRoute = ({ children }) => {
@@ -40,7 +67,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={
-          user ? <Navigate to="/" replace /> : <Login onLogin={setUser} />
+          user ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />
         } />
         <Route path="/register" element={
           user ? <Navigate to="/" replace /> : <Register />
@@ -48,10 +75,12 @@ function App() {
         
         <Route path="/" element={
           <ProtectedRoute>
-            <Layout user={user} onLogout={() => setUser(null)} />
+            <Layout user={user} onLogout={handleLogout} />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
+          <Route index element={
+            user?.role === 'WARGA' ? <UserDashboard /> : <Dashboard />
+          } />
           <Route path="rewards" element={<Rewards />} />
           <Route path="user/history" element={<UserHistory />} />
           <Route path="admin/categories" element={<AdminCategories />} />
