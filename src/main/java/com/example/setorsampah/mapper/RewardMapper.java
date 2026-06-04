@@ -15,7 +15,7 @@ public class RewardMapper {
         if (reward == null) {
             return null;
         }
-        return new RewardResponse(reward.getId(), reward.getName(), reward.getPointCost(), reward.getStock());
+        return new RewardResponse(reward.getId(), reward.getName(), reward.getPointCost(), reward.getStock(), reward.getDescription(), reward.getImageUrl());
     }
 
     public static Reward toEntity(RewardRequest request) {
@@ -26,6 +26,8 @@ public class RewardMapper {
         reward.setName(request.getName());
         reward.setPointCost(request.getPointCost());
         reward.setStock(request.getStock());
+        reward.setDescription(request.getDescription());
+        reward.setImageUrl(request.getImageUrl());
         return reward;
     }
 

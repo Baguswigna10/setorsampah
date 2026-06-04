@@ -17,7 +17,7 @@ const AdminRewards = () => {
 
   // Form states
   const [name, setName] = useState('');
-  const [requiredPoints, setRequiredPoints] = useState('');
+  const [pointCost, setPointCost] = useState('');
   const [stock, setStock] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -56,7 +56,7 @@ const AdminRewards = () => {
   const openAddModal = () => {
     setModalMode('add');
     setName('');
-    setRequiredPoints('');
+    setPointCost('');
     setStock('');
     setDescription('');
     setImageUrl('');
@@ -67,7 +67,7 @@ const AdminRewards = () => {
   const openEditModal = (reward) => {
     setModalMode('edit');
     setName(reward.name);
-    setRequiredPoints(reward.requiredPoints.toString());
+    setPointCost(reward.pointCost.toString());
     setStock(reward.stock.toString());
     setDescription(reward.description || '');
     setImageUrl(reward.imageUrl || '');
@@ -97,14 +97,14 @@ const AdminRewards = () => {
     setSuccess('');
 
     if (!name.trim()) return setError('Nama reward tidak boleh kosong');
-    if (!requiredPoints || parseFloat(requiredPoints) <= 0) return setError('Poin yang dibutuhkan harus lebih besar dari nol');
+    if (!pointCost || parseFloat(pointCost) <= 0) return setError('Poin yang dibutuhkan harus lebih besar dari nol');
     if (!stock || parseInt(stock) < 0) return setError('Stok tidak boleh negatif');
 
     setSubmitLoading(true);
     try {
       const payload = {
         name: name.trim(),
-        requiredPoints: parseFloat(requiredPoints),
+        pointCost: parseFloat(pointCost),
         stock: parseInt(stock),
         description: description.trim(),
         imageUrl: imageUrl.trim()
@@ -301,7 +301,7 @@ const AdminRewards = () => {
                         fontSize: '12px',
                         fontWeight: '700'
                       }}>
-                        {reward.requiredPoints} Poin
+                        {reward.pointCost} Poin
                       </span>
                     </td>
                     <td style={{ padding: '16px 20px', fontWeight: '500' }}>
@@ -436,8 +436,8 @@ const AdminRewards = () => {
                       type="number"
                       step="any"
                       placeholder="Contoh: 1000"
-                      value={requiredPoints}
-                      onChange={(e) => setRequiredPoints(e.target.value)}
+                      value={pointCost}
+                      onChange={(e) => setPointCost(e.target.value)}
                       required
                       style={{
                         width: '100%',

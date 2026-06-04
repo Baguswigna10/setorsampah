@@ -22,4 +22,8 @@ public class RewardRequest {
     @NotNull(message = "Stok tidak boleh kosong")
     @Positive(message = "Stok harus lebih besar dari nol")
     private Integer stock;
+
+    private String description;
+
+    private String imageUrl;
 }
