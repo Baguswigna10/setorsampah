@@ -49,7 +49,7 @@ public class DashboardServiceImpl implements DashboardService {
     public List<ChartDataResponse> getChartData(String filter) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startDate;
-        
+
         switch (filter.toLowerCase()) {
             case "weekly":
                 startDate = now.minusWeeks(4);
@@ -69,7 +69,7 @@ public class DashboardServiceImpl implements DashboardService {
         List<WasteTransaction> transactions = transactionRepository.findByTransactionDateBetween(startDate, now);
 
         Map<String, ChartDataResponse> groupedData = new LinkedHashMap<>();
-        
+
         // Initialize map with empty labels to ensure ordering and zero-filling
         switch (filter.toLowerCase()) {
             case "weekly":
@@ -107,7 +107,8 @@ public class DashboardServiceImpl implements DashboardService {
             String label;
             switch (filter.toLowerCase()) {
                 case "weekly":
-                    label = "Minggu " + t.getTransactionDate().get(java.time.temporal.WeekFields.ISO.weekOfWeekBasedYear());
+                    label = "Minggu "
+                            + t.getTransactionDate().get(java.time.temporal.WeekFields.ISO.weekOfWeekBasedYear());
                     break;
                 case "monthly":
                     label = t.getTransactionDate().format(DateTimeFormatter.ofPattern("MMM yyyy"));
