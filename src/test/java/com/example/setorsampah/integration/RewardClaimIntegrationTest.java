@@ -85,6 +85,6 @@ class RewardClaimIntegrationTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andReturn();
-        return objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("data").get("token").asText();
     }
 }

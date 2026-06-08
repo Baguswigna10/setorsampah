@@ -67,6 +67,7 @@ public class RewardClaimServiceImpl implements RewardClaimService {
         RewardClaim claim = new RewardClaim();
         claim.setUser(user);
         claim.setReward(reward);
+        claim.setPointsSpent(reward.getPointCost());
         claim.setClaimDate(LocalDateTime.now());
         claim.setStatus(ClaimStatus.APPROVED);
 

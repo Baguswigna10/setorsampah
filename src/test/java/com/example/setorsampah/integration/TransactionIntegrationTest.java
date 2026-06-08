@@ -71,7 +71,7 @@ class TransactionIntegrationTest {
         bankId = bankRepository.save(bank).getId();
 
         WasteCategory category = new WasteCategory();
-        category.setName("Plastik");
+        category.setName("Plastik Test");
         category.setPointPerKg(5.0);
         category.setWasteType(WasteType.ANORGANIK);
         categoryId = categoryRepository.save(category).getId();
@@ -109,6 +109,6 @@ class TransactionIntegrationTest {
                         .content(body))
                 .andExpect(status().isOk())
                 .andReturn();
-        return objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("data").get("token").asText();
     }
 }
