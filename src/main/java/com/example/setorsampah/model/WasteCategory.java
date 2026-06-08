@@ -14,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,7 @@ public class WasteCategory {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "waste_type", nullable = false)
+    @ColumnDefault("'ANORGANIK'")
     private WasteType wasteType = WasteType.ANORGANIK;
 
     @OneToMany(mappedBy = "category")
